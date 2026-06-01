@@ -1,0 +1,18 @@
+project:
+  name: synthetic-rare-disease
+  seed: 42
+  version: "0.1.0"
+  notes: "synthcity deferred to Phase 5 — incompatible with Python 3.13, will install in isolated env"
+
+data:
+  raw_path: data/raw/
+  processed_path: data/processed/
+  synthetic_path: data/synthetic/
+
+privacy:
+  epsilon: 1.0
+  delta: 1e-5
+
+model:
+  default: ctgan
+  epochs: 300
