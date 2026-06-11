@@ -1,5 +1,5 @@
 Model,Val Accuracy,Val F1,Test Accuracy,Test F1
-Random Forest,1.0,1.0,1.0,1.0
-Logistic Regression,1.0,1.0,1.0,1.0
-SVM,1.0,1.0,1.0,1.0
-Gradient Boosting,1.0,1.0,1.0,1.0
+Random Forest,0.8,0.7333,0.8,0.7333
+Logistic Regression,0.8,0.7333,0.8,0.7333
+SVM,0.8,0.7333,0.8,0.7333
+Gradient Boosting,0.8,0.7333,0.8,0.7333
