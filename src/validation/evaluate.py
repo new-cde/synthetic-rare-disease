@@ -285,6 +285,46 @@ def save_report(div_df: pd.DataFrame,
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
+def compute_privacy_score(real_df: pd.DataFrame,
+                           synth_df: pd.DataFrame) -> dict:
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.neighbors import NearestNeighbors
+    import numpy as np
+
+    cat_cols = ["disease", "inheritance", "category",
+                "affected_systems", "prevalence"]
+    df_real_enc  = real_df[cat_cols].copy()
+    df_synth_enc = synth_df[cat_cols].copy()
+
+    for col in cat_cols:
+        le = LabelEncoder()
+        le.fit(pd.concat([df_real_enc[col], df_synth_enc[col]]).astype(str))
+        df_real_enc[col]  = le.transform(df_real_enc[col].astype(str))
+        df_synth_enc[col] = le.transform(df_synth_enc[col].astype(str))
+
+    nn = NearestNeighbors(n_neighbors=1, metric="euclidean")
+    nn.fit(df_real_enc.values)
+    distances, _ = nn.kneighbors(df_synth_enc.values)
+    avg_dist = float(np.mean(distances))
+
+    # Score: higher distance = better privacy
+    privacy_score = min(100, round(avg_dist * 25, 1))
+    exact_matches = int(np.sum(distances == 0))
+
+    result = {
+        "privacy_score":   privacy_score,
+        "avg_nn_distance": round(avg_dist, 4),
+        "exact_matches":   exact_matches,
+        "risk_level":      "Low" if exact_matches == 0 else
+                           "Medium" if exact_matches < 5 else "High"
+    }
+
+    Path("reports").mkdir(exist_ok=True)
+    pd.DataFrame([result]).to_csv("reports/privacy_score.csv", index=False)
+    logger.info(f"Privacy score: {privacy_score} | "
+                f"Exact matches: {exact_matches} | "
+                f"Risk: {result['risk_level']}")
+    return result
 
 def run_evaluation():
     config         = load_config()
@@ -296,17 +336,26 @@ def run_evaluation():
     mlflow.set_experiment("synthetic-rare-disease")
 
     with mlflow.start_run(run_name="tstr_validation"):
+
+        # Load data first — everything depends on this
         real_df, synth_df = load_data(processed_path, synthetic_path)
 
+        # Now compute privacy score (real_df and synth_df exist)
+        privacy = compute_privacy_score(real_df, synth_df)
+
+        # Run divergence and TSTR analysis
         div_df       = compute_divergences(real_df, synth_df, out_dir)
         plot_distribution_comparison(real_df, synth_df, out_dir)
         tstr_results = run_tstr(real_df, synth_df, out_dir)
 
+        # Log everything to MLflow inside the active run
         mlflow.log_metrics({
-            "avg_js_divergence":  div_df["JS Divergence"].mean(),
-            "baseline_accuracy":  tstr_results["baseline_accuracy"],
-            "tstr_accuracy":      tstr_results["tstr_accuracy"],
-            "accuracy_drop":      tstr_results["accuracy_drop"],
+            "avg_js_divergence": div_df["JS Divergence"].mean(),
+            "baseline_accuracy": tstr_results["baseline_accuracy"],
+            "tstr_accuracy":     tstr_results["tstr_accuracy"],
+            "accuracy_drop":     tstr_results["accuracy_drop"],
+            "privacy_score":     privacy["privacy_score"],
+            "exact_matches":     float(privacy["exact_matches"]),
         })
 
         save_report(
@@ -316,7 +365,8 @@ def run_evaluation():
 
     logger.success("Evaluation complete — check http://localhost:5000")
     print(f"\nFinal quality rating: {tstr_results['quality_rating']}")
-
+    print(f"Privacy score       : {privacy['privacy_score']}/100")
+    print(f"Risk level          : {privacy['risk_level']}")
 
 if __name__ == "__main__":
     run_evaluation()

@@ -5,21 +5,21 @@ SYNTHETIC DATA VALIDATION REPORT
 1. DISTRIBUTION SIMILARITY (KL / JS Divergence)
 ------------------------------------------------------------
           Column  KL Divergence  JS Divergence Quality
-         disease         0.0071         0.0424    Good
-     inheritance         0.0048         0.0349    Good
-        category         0.0129         0.0567    Good
-affected_systems         0.0032         0.0280    Good
-      prevalence         0.0071         0.0421    Good
+         disease         0.0096         0.0491    Good
+     inheritance         0.0017         0.0208    Good
+        category         0.0010         0.0155    Good
+affected_systems         0.0009         0.0154    Good
+      prevalence         0.0081         0.0447    Good
 
-Average JS Divergence : 0.0408
+Average JS Divergence : 0.0291
 
 2. TSTR EVALUATION (Train on Synthetic, Test on Real)
 ------------------------------------------------------------
 Baseline accuracy     : 0.6633
-TSTR accuracy         : 0.3767
+TSTR accuracy         : 0.41
 Baseline F1           : 0.6613
-TSTR F1               : 0.3406
-Accuracy drop         : 0.2867
+TSTR F1               : 0.3431
+Accuracy drop         : 0.2533
 Quality rating        : Poor
 
 3. INTERPRETATION

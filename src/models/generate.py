@@ -28,20 +28,22 @@ def build_metadata(df: pd.DataFrame) -> SingleTableMetadata:
     return metadata
 
 
-def train_ctgan(df: pd.DataFrame,
-                metadata: SingleTableMetadata,
-                epochs: int) -> CTGANSynthesizer:
+def train_ctgan(df, metadata, epochs):
     logger.info(f"Training CTGAN — epochs={epochs}")
-    model = CTGANSynthesizer(
-        metadata,
-        epochs=epochs,
-        verbose=True,
-        cuda=False
-    )
+    model = CTGANSynthesizer(metadata, epochs=epochs, verbose=True, cuda=False)
     model.fit(df)
+
+    # Save loss history for dashboard
+    try:
+        loss_info = model._model.loss_values
+        loss_df   = pd.DataFrame(loss_info)
+        loss_df.to_csv("reports/ctgan_loss.csv", index=False)
+        logger.info("CTGAN loss history saved to reports/ctgan_loss.csv")
+    except Exception:
+        logger.warning("Could not extract CTGAN loss values — skipping")
+
     logger.success("CTGAN training complete")
     return model
-
 
 def save_model(model: CTGANSynthesizer, model_dir: str) -> str:
     Path(model_dir).mkdir(parents=True, exist_ok=True)
