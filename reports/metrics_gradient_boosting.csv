@@ -1,0 +1,2 @@
+model,val_accuracy,val_f1,test_accuracy,test_f1
+Gradient Boosting,0.8233,0.8194,0.8867,0.884

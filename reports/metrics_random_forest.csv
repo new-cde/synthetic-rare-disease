@@ -1,0 +1,2 @@
+model,val_accuracy,val_f1,test_accuracy,test_f1
+Random Forest,0.8067,0.8011,0.89,0.8881

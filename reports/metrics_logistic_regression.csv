@@ -1,0 +1,2 @@
+model,val_accuracy,val_f1,test_accuracy,test_f1
+Logistic Regression,0.8233,0.8167,0.8767,0.8744
