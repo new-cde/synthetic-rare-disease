@@ -15,4 +15,4 @@ privacy:
 
 model:
   default: ctgan
-  epochs: 300
+  epochs: 600
