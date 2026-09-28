@@ -387,62 +387,151 @@ elif page == "🔬  EDA & Clustering":
 # SYNTHETIC GENERATOR
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⚙️  Synthetic Generator":
-    st.title("Synthetic data generator")
-    st.caption("Generate synthetic patient records using CTGAN")
+    st.title("Synthetic data — admin analytics")
+    st.caption("Generation configuration, dataset statistics, and monitoring")
     st.divider()
 
-    col1,col2,col3 = st.columns(3)
-    with col1:
-        disease_filter = st.selectbox("Disease filter", [
-            "All diseases","fukuyama_muscular_dystrophy",
-            "hallervorden_spatz_disease","moyamoya_disease",
-            "pachygyria_cerebellar_hypoplasia","walker_warburg_syndrome"
-        ])
-    with col2:
-        st.selectbox("Generative model", ["CTGAN (SDV)"])
-    with col3:
-        n_display = st.number_input("Records to display", 10, 1000, 100, 10)
+    # ── Config details ────────────────────────────────────────────────────────
+    st.subheader("Current generation configuration")
+    config_path = Path("config/config.yaml")
+    if config_path.exists():
+        import yaml
+        with open(config_path) as f:
+            cfg = yaml.safe_load(f)
 
-    if st.button("▶ Generate synthetic data", type="primary", use_container_width=True):
-        with st.spinner("Generating..."):
-            r = subprocess.run([sys.executable,"src/models/generate.py"],
-                               capture_output=True, text=True)
-            if r.returncode == 0:
-                st.success("Generation complete!")
-            else:
-                st.error("Failed"); st.code(r.stderr[-1000:])
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Model",        cfg["model"]["default"].upper())
+        c2.metric("Epochs",       cfg["model"]["epochs"])
+        c3.metric("Random seed",  cfg["project"]["seed"])
+        c4.metric("Privacy ε",    cfg["privacy"]["epsilon"])
+        c5.metric("Privacy δ",    cfg["privacy"]["delta"])
 
     st.divider()
-    if Path("data/synthetic/synthetic_metadata.csv").exists():
-        df_s = load_synth()
-        if disease_filter != "All diseases":
-            df_s = df_s[df_s["disease"] == disease_filter]
-        c1,c2,c3 = st.columns(3)
-        c1.metric("Synthetic records", len(df_s))
-        c2.metric("Unique diseases",   df_s["disease"].nunique())
-        c3.metric("Null values",       int(df_s.isnull().sum().sum()))
-        col_l,col_r = st.columns(2)
-        with col_l:
-            fig = px.bar(df_s["disease"].value_counts().reset_index(),
-                         x="disease", y="count", color="disease",
-                         color_discrete_sequence=px.colors.qualitative.Set2)
-            fig.update_layout(showlegend=False, plot_bgcolor="#0F1624",
-                              paper_bgcolor="#0F1624", font_color="#A8B9CC")
-            st.plotly_chart(fig, use_container_width=True)
-        with col_r:
-            df_r = load_real()
-            rp = df_r["disease"].value_counts(normalize=True).reset_index()
-            sp = df_s["disease"].value_counts(normalize=True).reset_index()
-            rp["source"]="Real"; sp["source"]="Synthetic"
-            comb=pd.concat([rp,sp]); comb.columns=["disease","proportion","source"]
-            fig2=px.bar(comb,x="disease",y="proportion",color="source",barmode="group",
-                        color_discrete_sequence=["#4C78A8","#F58518"])
-            fig2.update_layout(plot_bgcolor="#0F1624",paper_bgcolor="#0F1624",font_color="#A8B9CC")
-            st.plotly_chart(fig2, use_container_width=True)
-        st.dataframe(df_s.head(n_display), use_container_width=True)
-    else:
-        st.info("No synthetic data found. Click Generate above.")
 
+    # ── Synthetic dataset stats ───────────────────────────────────────────────
+    synth_path = Path("data/synthetic/synthetic_metadata.csv")
+    if not synth_path.exists():
+        st.warning("No synthetic data found. Ask a user to generate records first.")
+        st.stop()
+
+    df_s = pd.read_csv(synth_path)
+    df_r = load_real()
+
+    st.subheader("Generated dataset overview")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Synthetic records",  f"{len(df_s):,}")
+    c2.metric("Real records",       f"{len(df_r):,}")
+    c3.metric("Ratio synth/real",   f"{len(df_s)/len(df_r):.2f}x")
+    c4.metric("Unique diseases",    df_s["disease"].nunique())
+    c5.metric("Null values",        int(df_s.isnull().sum().sum()))
+
+    st.divider()
+
+    # ── Disease distribution comparison ──────────────────────────────────────
+    st.subheader("Disease distribution — real vs synthetic")
+    col_l, col_r = st.columns(2)
+
+    with col_l:
+        real_counts = df_r["disease"].value_counts().reset_index()
+        real_counts.columns = ["disease", "count"]
+        real_counts["source"] = "Real"
+        synth_counts = df_s["disease"].value_counts().reset_index()
+        synth_counts.columns = ["disease", "count"]
+        synth_counts["source"] = "Synthetic"
+        combined = pd.concat([real_counts, synth_counts])
+        fig = px.bar(combined, x="disease", y="count",
+                     color="source", barmode="group",
+                     color_discrete_sequence=["#4C78A8","#F58518"],
+                     title="Record count per disease")
+        fig.update_layout(plot_bgcolor="#0F1624", paper_bgcolor="#0F1624",
+                          font_color="#A8B9CC", xaxis_title="")
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col_r:
+        rp = df_r["disease"].value_counts(normalize=True).reset_index()
+        sp = df_s["disease"].value_counts(normalize=True).reset_index()
+        rp["source"] = "Real"; sp["source"] = "Synthetic"
+        comb = pd.concat([rp, sp]); comb.columns = ["disease","proportion","source"]
+        fig2 = px.bar(comb, x="disease", y="proportion",
+                      color="source", barmode="group",
+                      color_discrete_sequence=["#4C78A8","#F58518"],
+                      title="Proportion per disease")
+        fig2.update_layout(plot_bgcolor="#0F1624", paper_bgcolor="#0F1624",
+                           font_color="#A8B9CC", xaxis_title="")
+        st.plotly_chart(fig2, use_container_width=True)
+
+    st.divider()
+
+    # ── Column-wise stats ─────────────────────────────────────────────────────
+    st.subheader("Column-wise value distribution")
+    col_sel = st.selectbox("Select column to inspect",
+                           ["disease","inheritance","category",
+                            "affected_systems","prevalence"])
+
+    col_l2, col_r2 = st.columns(2)
+    with col_l2:
+        st.markdown("**Real data**")
+        real_vc = df_r[col_sel].value_counts().reset_index()
+        real_vc.columns = ["value","count"]
+        fig3 = px.bar(real_vc, x="value", y="count",
+                      color="value", color_discrete_sequence=px.colors.qualitative.Set2)
+        fig3.update_layout(showlegend=False, plot_bgcolor="#0F1624",
+                           paper_bgcolor="#0F1624", font_color="#A8B9CC")
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with col_r2:
+        st.markdown("**Synthetic data**")
+        synth_vc = df_s[col_sel].value_counts().reset_index()
+        synth_vc.columns = ["value","count"]
+        fig4 = px.bar(synth_vc, x="value", y="count",
+                      color="value", color_discrete_sequence=px.colors.qualitative.Set1)
+        fig4.update_layout(showlegend=False, plot_bgcolor="#0F1624",
+                           paper_bgcolor="#0F1624", font_color="#A8B9CC")
+        st.plotly_chart(fig4, use_container_width=True)
+
+    st.divider()
+
+    # ── Generation history from MLflow ────────────────────────────────────────
+    st.subheader("Generation run history — MLflow")
+    try:
+        import mlflow
+        mlflow.set_tracking_uri("mlruns")
+        runs = mlflow.search_runs(
+            experiment_names=["synthetic-rare-disease"],
+            filter_string="tags.mlflow.runName LIKE 'ctgan%'",
+            order_by=["start_time DESC"]
+        )
+        if not runs.empty:
+            display_cols = []
+            for col in ["tags.mlflow.runName","params.n_synth",
+                        "params.epochs","params.seed",
+                        "metrics.synthetic_records","start_time"]:
+                if col in runs.columns:
+                    display_cols.append(col)
+            if display_cols:
+                df_runs = runs[display_cols].copy()
+                df_runs.columns = [c.split(".")[-1] for c in display_cols]
+                df_runs["start_time"] = pd.to_datetime(
+                    df_runs["start_time"]
+                ).dt.strftime("%Y-%m-%d %H:%M")
+                st.dataframe(df_runs, use_container_width=True, hide_index=True)
+        else:
+            st.info("No CTGAN runs found in MLflow yet.")
+    except Exception as e:
+        st.info(f"MLflow run history not available — start MLflow with `mlflow ui`. ({e})")
+
+    st.divider()
+
+    # ── Raw synthetic data table ──────────────────────────────────────────────
+    st.subheader("Raw synthetic records")
+    n_show = st.number_input("Records to display", 10, len(df_s), 50, 10)
+    disease_f = st.multiselect("Filter by disease",
+                               df_s["disease"].unique().tolist(),
+                               default=df_s["disease"].unique().tolist())
+    filtered = df_s[df_s["disease"].isin(disease_f)]
+    st.dataframe(filtered.head(n_show), use_container_width=True)
+    st.caption(f"Showing {min(n_show, len(filtered))} of {len(filtered):,} records")
+    
 # ══════════════════════════════════════════════════════════════════════════════
 # VALIDATION
 # ══════════════════════════════════════════════════════════════════════════════

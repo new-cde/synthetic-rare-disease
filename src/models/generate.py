@@ -66,17 +66,16 @@ def generate_and_save(model: CTGANSynthesizer,
     return synthetic_df
 
 
-def run_generation():
+def run_generation(n_synth: int = 1000):
     config         = load_config()
     epochs         = config["model"]["epochs"]
     seed           = config["project"]["seed"]
     processed_path = config["data"]["processed_path"]
     synthetic_path = config["data"]["synthetic_path"]
-    n_synth        = 1000
 
     mlflow.set_experiment("synthetic-rare-disease")
 
-    with mlflow.start_run(run_name="ctgan_generation"):
+    with mlflow.start_run(run_name=f"ctgan_generation_{n_synth}records"):
         mlflow.log_params({
             "model":   "ctgan",
             "epochs":  epochs,
@@ -105,8 +104,11 @@ def run_generation():
         logger.info("\nNull check:")
         print(synthetic_df.isnull().sum().to_string())
 
-    logger.success("Generation complete — check http://localhost:5000")
+    logger.success(f"Generated {n_synth} records — check http://localhost:5000")
 
 
 if __name__ == "__main__":
-    run_generation()
+    import sys
+    # Accept optional command line argument for record count
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
+    run_generation(n_synth=n)

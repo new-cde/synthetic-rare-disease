@@ -1,0 +1,5 @@
+Generator,Avg JS Divergence,Avg KL Divergence,Max JS Divergence,TSTR Accuracy,TSTR Macro F1,TSTR Weighted F1,TSTR Balanced Acc,Unique Combo Rate,Exact Duplicate Rate
+Gaussian Copula,0.0223,0.002,0.0289,0.4867,0.4651,0.4651,0.4867,0.302,0.698
+CTGAN,0.035,0.0058,0.0469,0.72,0.7176,0.7176,0.72,0.039,0.961
+TVAE,0.0302,0.0046,0.0454,0.7033,0.7021,0.7021,0.7033,0.039,0.961
+CopulaGAN,0.0333,0.005,0.0434,0.7233,0.7226,0.7226,0.7233,0.055,0.945

@@ -430,12 +430,12 @@ clusters confirm the dataset is well-structured and clinically meaningful.
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⚙️  Synthetic Generator":
     st.title("Synthetic data generator")
-    st.caption("Generate synthetic patient records using CTGAN")
+    st.caption("Configure and generate synthetic patient records using CTGAN")
     st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
-        disease_filter = st.selectbox("Disease filter", [
+        disease_filter = st.selectbox("Disease filter (display only)", [
             "All diseases",
             "fukuyama_muscular_dystrophy",
             "hallervorden_spatz_disease",
@@ -444,33 +444,51 @@ elif page == "⚙️  Synthetic Generator":
             "walker_warburg_syndrome"
         ])
     with col2:
-        st.selectbox("Generative model", ["CTGAN (SDV)"])
-    with col3:
         n_display = st.number_input("Records to display", 10, 1000, 100, 10)
 
-    if st.button("▶ Generate synthetic data", type="primary", use_container_width=True):
-        with st.spinner("Training CTGAN and generating synthetic records..."):
+    st.divider()
+    st.subheader("How many synthetic records do you want?")
+    n_generate = st.slider(
+        "Number of records to generate",
+        min_value=100, max_value=5000,
+        value=1000, step=100,
+        help="Slide to choose how many synthetic patient records CTGAN will generate"
+    )
+
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Records requested", f"{n_generate:,}")
+    col_b.metric("Training records",  "1,400")
+    col_c.metric("Ratio",             f"{n_generate/1400:.1f}x real data")
+
+    st.divider()
+
+    if st.button(f"▶ Generate {n_generate:,} synthetic records",
+                 type="primary", use_container_width=True):
+        with st.spinner(f"Training CTGAN and generating {n_generate:,} records..."):
             r = subprocess.run(
-                [sys.executable, "src/models/generate.py"],
+                [sys.executable, "src/models/generate.py", str(n_generate)],
                 capture_output=True, text=True
             )
             if r.returncode == 0:
-                st.success("Generation complete!")
+                st.success(f"Successfully generated {n_generate:,} synthetic records!")
+                st.balloons()
             else:
                 st.error("Generation failed — see error below")
                 st.code(r.stderr[-1000:])
 
     st.divider()
+
     synth_path = Path("data/synthetic/synthetic_metadata.csv")
     if synth_path.exists():
-        df_s = load_synth()
+        df_s = pd.read_csv(synth_path)
         if disease_filter != "All diseases":
             df_s = df_s[df_s["disease"] == disease_filter]
 
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Synthetic records", len(df_s))
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Synthetic records", f"{len(df_s):,}")
         c2.metric("Unique diseases",   df_s["disease"].nunique())
         c3.metric("Null values",       int(df_s.isnull().sum().sum()))
+        c4.metric("Columns",           len(df_s.columns))
 
         col_l, col_r = st.columns(2)
         with col_l:
@@ -489,21 +507,22 @@ elif page == "⚙️  Synthetic Generator":
             df_r = load_real()
             rp = df_r["disease"].value_counts(normalize=True).reset_index()
             sp = df_s["disease"].value_counts(normalize=True).reset_index()
-            rp["source"] = "Real"; sp["source"] = "Synthetic"
+            rp["source"] = "Real"
+            sp["source"] = "Synthetic"
             comb = pd.concat([rp, sp])
-            comb.columns = ["disease","proportion","source"]
-            fig2 = px.bar(comb, x="disease", y="proportion", color="source",
-                          barmode="group",
+            comb.columns = ["disease", "proportion", "source"]
+            fig2 = px.bar(comb, x="disease", y="proportion",
+                          color="source", barmode="group",
                           color_discrete_sequence=["#4C78A8","#F58518"])
-            fig2.update_layout(plot_bgcolor="#0F1624", paper_bgcolor="#0F1624",
-                               font_color="#A8B9CC")
+            fig2.update_layout(plot_bgcolor="#0F1624",
+                               paper_bgcolor="#0F1624", font_color="#A8B9CC")
             st.plotly_chart(fig2, use_container_width=True)
 
-        st.subheader("Synthetic records preview")
+        st.subheader(f"Preview — showing {min(n_display, len(df_s))} of {len(df_s):,} records")
         st.dataframe(df_s.head(n_display), use_container_width=True)
     else:
-        st.info("No synthetic data found. Click Generate above to create records.")
-
+        st.info("No synthetic data found yet. Use the slider above and click Generate.")
+        
 # ══════════════════════════════════════════════════════════════════════════════
 # VALIDATION
 # ══════════════════════════════════════════════════════════════════════════════
