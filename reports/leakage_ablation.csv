@@ -1,0 +1,11 @@
+Feature Set,Features Used,Accuracy,Macro F1,Weighted F1,Balanced Acc
+All features (baseline),"inheritance, category, affected_systems, prevalence",0.8067,0.8013,0.8013,0.8067
+Without 'inheritance',"category, affected_systems, prevalence",0.7433,0.7393,0.7393,0.7433
+Without 'category',"inheritance, affected_systems, prevalence",0.74,0.7347,0.7347,0.74
+Without 'affected_systems',"inheritance, category, prevalence",0.7533,0.7416,0.7416,0.7533
+Without 'prevalence',"inheritance, category, affected_systems",0.7433,0.7363,0.7363,0.7433
+Safe only (inheritance + affected_systems),"inheritance, affected_systems",0.53,0.4988,0.4988,0.53
+Single feature: 'inheritance',inheritance,0.3233,0.3125,0.3125,0.3233
+Single feature: 'category',category,0.49,0.4627,0.4627,0.49
+Single feature: 'affected_systems',affected_systems,0.3533,0.3467,0.3467,0.3533
+Single feature: 'prevalence',prevalence,0.54,0.5362,0.5362,0.54
