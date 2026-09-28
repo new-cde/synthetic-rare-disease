@@ -1,0 +1,6 @@
+Feature,real_acc,synth_acc,delta
+disease,1.0,0.983,-0.017
+inheritance,0.6003,0.981,0.3807
+category,1.0,0.98,-0.02
+affected_systems,0.4,0.991,0.591
+prevalence,1.0,0.977,-0.023

@@ -1,0 +1,2 @@
+avg_nn_dist_train,avg_nn_dist_test,train_test_ratio,exact_matches_train,exact_matches_test,near_dupes_train,near_dupes_test,memorisation_risk,membership_inference_auc,membership_inference_auc_std,membership_inference_risk,exact_match_rate_vs_real,synth_unique_record_rate,synth_exact_duplicate_rate
+0.0768,0.0768,1.0,951,951,951,951,Low,0.3846,0.0627,Low,0.951,0.038,0.962
