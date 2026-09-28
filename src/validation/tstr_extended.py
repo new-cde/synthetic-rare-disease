@@ -1,3 +1,5 @@
+import sys
+import warnings
 import pandas as pd
 import numpy as np
 import yaml
@@ -15,11 +17,14 @@ from sklearn.metrics import (
     recall_score, roc_auc_score, confusion_matrix, ConfusionMatrixDisplay
 )
 
-FEATS  = ["inheritance", "category", "affected_systems", "prevalence"]
-TARGET = "disease"
-SEEDS  = [42, 123, 456, 789, 1024]
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+FEATS   = ["inheritance", "category", "affected_systems", "prevalence"]
+TARGET  = "disease"
+SEEDS   = [42, 123, 456, 789, 1024]
 METRICS = ["Accuracy", "MacroF1", "WeightedF1", "BalancedAcc",
            "MacroPrecision", "MacroRecall", "ROC_AUC"]
+SUMMARY = Path("reports/tstr_summary.csv")
 
 
 def load_config(path="config/config.yaml"):
@@ -27,10 +32,11 @@ def load_config(path="config/config.yaml"):
         return yaml.safe_load(f)
 
 
-def load_data(cfg):
-    real  = pd.read_csv(Path(cfg["data"]["processed_path"]) / "metadata_clean.csv")
-    synth = pd.read_csv(Path(cfg["data"]["synthetic_path"]) / "synthetic_metadata.csv")
-    logger.info(f"Synthetic file: {len(synth)} rows")
+def load_data(cfg, synth_path=None):
+    real = pd.read_csv(Path(cfg["data"]["processed_path"]) / "metadata_clean.csv")
+    synth_path = synth_path or Path(cfg["data"]["synthetic_path"]) / "synthetic_metadata.csv"
+    synth = pd.read_csv(synth_path)
+    logger.info(f"Synthetic file: {synth_path} ({len(synth)} rows)")
     enc = {c: LabelEncoder().fit(pd.concat([real[c], synth[c]]).astype(str))
            for c in FEATS}
     le_t = LabelEncoder().fit(real[TARGET])
@@ -94,9 +100,10 @@ def perturb(X, y, seed, noise, is_train):
     return X, y
 
 
-def run():
+def run(synth_path=None):
     cfg = load_config()
-    (Xr_tr, yr_tr), (Xr_te, yr_te), (Xs, ys), le_t = load_data(cfg)
+    (Xr_tr, yr_tr), (Xr_te, yr_te), (Xs, ys), le_t = load_data(cfg, synth_path)
+    tag = Path(synth_path).stem if synth_path else "synthetic_metadata"
     k = len(le_t.classes_)
     out_dir = Path("reports/figures")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -118,36 +125,29 @@ def run():
                     m, pred = score(model, Xb_p, yb_p, k)
                     rows.append({"Protocol": protocol, "Arm": arm,
                                  "Model": name, "Seed": seed, **m})
-                    if (protocol == "Noise OFF" and name == "SVM"
-                            and seed == 42):
+                    if protocol == "Noise OFF" and name == "SVM" and seed == 42:
                         cms[arm] = (yb_p, pred)
-            logger.info(f"done: {protocol} / {arm}")
 
     raw = pd.DataFrame(rows)
-    raw.to_csv("reports/tstr_extended_raw.csv", index=False)
-    agg = (raw.groupby(["Protocol", "Arm", "Model"])[METRICS]
-              .agg(["mean", "std"]).round(4))
+    raw.to_csv(f"reports/tstr_extended_raw_{tag}.csv", index=False)
+    agg = raw.groupby(["Protocol", "Arm", "Model"])[METRICS].agg(["mean", "std"]).round(4)
     agg.columns = [f"{a}_{b}" for a, b in agg.columns]
     agg = agg.reset_index()
-    agg.to_csv("reports/tstr_extended.csv", index=False)
+    agg.to_csv(f"reports/tstr_extended_{tag}.csv", index=False)
 
-    for protocol in ("Noise OFF", "Noise ON"):
-        for metric in ("Accuracy", "MacroF1", "BalancedAcc", "ROC_AUC"):
-            sub = agg[agg["Protocol"] == protocol].copy()
-            sub["cell"] = sub.apply(
-                lambda r: f"{r[metric + '_mean']:.3f}±{r[metric + '_std']:.3f}",
-                axis=1)
-            t = sub.pivot(index="Model", columns="Arm", values="cell")
-            t = t[["TRTR", "TSTR", "TRTS"]]
-            print("\n" + "=" * 70)
-            print(f"{metric} | {protocol} (mean±SD over {len(SEEDS)} seeds)")
-            print("=" * 70)
-            print(t.to_string())
+    # one compact row-set per file, appended to a shared summary
+    summ = (agg.groupby(["Protocol", "Arm"])[["Accuracy_mean", "MacroF1_mean", "ROC_AUC_mean"]]
+               .mean().round(4).reset_index())
+    summ.insert(0, "File", tag)
+    if SUMMARY.exists():
+        old = pd.read_csv(SUMMARY)
+        summ = pd.concat([old[old["File"] != tag], summ], ignore_index=True)
+    summ.to_csv(SUMMARY, index=False)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
     for ax, protocol in zip(axes, ("Noise OFF", "Noise ON")):
         sub = agg[agg["Protocol"] == protocol]
-        models = sub["Model"].unique()
+        models = list(sub["Model"].unique())
         x = np.arange(len(models))
         for i, arm in enumerate(["TRTR", "TSTR", "TRTS"]):
             s = sub[sub["Arm"] == arm].set_index("Model").loc[models]
@@ -159,9 +159,9 @@ def run():
         ax.set_ylim(0, 1.1)
     axes[0].set_ylabel("Accuracy")
     axes[0].legend()
-    plt.suptitle("TRTR vs TSTR vs TRTS")
+    plt.suptitle(f"TRTR vs TSTR vs TRTS: {tag}")
     plt.tight_layout()
-    fig.savefig(out_dir / "trtr_tstr_trts.png", dpi=150)
+    fig.savefig(out_dir / f"trtr_tstr_trts_{tag}.png", dpi=150)
     plt.close(fig)
 
     fig, axes = plt.subplots(1, 3, figsize=(20, 6))
@@ -173,10 +173,23 @@ def run():
             ax=ax, xticks_rotation=45, colorbar=False)
         ax.set_title(f"SVM {arm} (noise off)")
     plt.tight_layout()
-    fig.savefig(out_dir / "confusion_trtr_tstr_trts.png", dpi=150)
+    fig.savefig(out_dir / f"confusion_trtr_tstr_trts_{tag}.png", dpi=150)
     plt.close(fig)
-    logger.success("Saved reports/tstr_extended.csv and figures")
+    logger.success(f"{tag}: saved reports/tstr_extended_{tag}.csv and figures")
+
+
+def print_summary():
+    d = pd.read_csv(SUMMARY)
+    for metric in ("Accuracy_mean", "MacroF1_mean"):
+        for protocol in ("Noise OFF", "Noise ON"):
+            t = (d[d["Protocol"] == protocol]
+                 .pivot(index="File", columns="Arm", values=metric)[["TRTR", "TSTR", "TRTS"]])
+            print(f"\n{metric} | {protocol} (mean over 4 classifiers, 5 seeds)")
+            print(t.to_string())
 
 
 if __name__ == "__main__":
-    run()
+    if len(sys.argv) > 1 and sys.argv[1] == "--summary":
+        print_summary()
+    else:
+        run(sys.argv[1] if len(sys.argv) > 1 else None)

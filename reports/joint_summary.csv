@@ -1,0 +1,6 @@
+File,N synthetic,CramersV MAE,CramersV max err,MI MAE (nats),MI max err (nats),Valid combo rate (5 cols),Valid combo rate (8 cols)
+synthetic_gaussian_copula,1000,0.7135,0.9993,0.8757,1.3119,0.065,0.041
+synthetic_ctgan,1000,0.0328,0.0499,0.0878,0.1762,0.951,0.933
+synthetic_tvae,1000,0.0494,0.0825,0.1367,0.1957,0.917,0.914
+synthetic_copulagan,1000,0.0425,0.07,0.1108,0.1909,0.931,0.91
+synthetic_metadata,1000,0.0294,0.0422,0.0833,0.144,0.951,0.939
