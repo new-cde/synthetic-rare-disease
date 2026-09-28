@@ -1,0 +1,29 @@
+{
+    "columns": {
+        "disease": {
+            "sdtype": "categorical"
+        },
+        "full_name": {
+            "sdtype": "categorical"
+        },
+        "orphacode": {
+            "sdtype": "categorical"
+        },
+        "alternative_names": {
+            "sdtype": "categorical"
+        },
+        "prevalence": {
+            "sdtype": "categorical"
+        },
+        "inheritance": {
+            "sdtype": "categorical"
+        },
+        "category": {
+            "sdtype": "categorical"
+        },
+        "affected_systems": {
+            "sdtype": "categorical"
+        }
+    },
+    "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"
+}

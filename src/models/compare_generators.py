@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import random
+import torch
 import mlflow
 import pickle
 import yaml
@@ -9,6 +11,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from loguru import logger
 
+SEED = 42
+
+def set_seed(seed: int = SEED) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    
 from sdv.single_table import (
     CTGANSynthesizer,
     TVAESynthesizer,
@@ -157,7 +166,7 @@ def diversity_metrics(synth_df: pd.DataFrame) -> dict:
 
     return {
         "unique_combination_rate": unique_rate,
-        "exact_duplicate_rate":    exact_dups,
+        "within_synthetic_repetition_rate": exact_dups,
         "unique_combinations":     int(combos.nunique()),
     }
 
@@ -177,7 +186,7 @@ def save_comparison_table(results: dict, out_dir: Path) -> pd.DataFrame:
             "TSTR Weighted F1":     m["tstr_weighted_f1"],
             "TSTR Balanced Acc":    m["tstr_balanced_accuracy"],
             "Unique Combo Rate":    m["unique_combination_rate"],
-            "Exact Duplicate Rate": m["exact_duplicate_rate"],
+            "Within-Synthetic Repetition Rate": m["within_synthetic_repetition_rate"],
         })
 
     df = pd.DataFrame(rows)
@@ -203,8 +212,7 @@ def save_comparison_table(results: dict, out_dir: Path) -> pd.DataFrame:
                 width, label="Avg JS Divergence", color="steelblue")
     axes[0].bar([i + width/2 for i in x], df["Avg KL Divergence"],
                 width, label="Avg KL Divergence", color="teal")
-    axes[0].axhline(0.1, color="green", linestyle="--",
-                    linewidth=1, label="JS Good threshold (0.1)")
+
     axes[0].set_xticks(list(x)); axes[0].set_xticklabels(generators, rotation=15)
     axes[0].set_ylabel("Divergence"); axes[0].set_title("Marginal fidelity")
     axes[0].legend(fontsize=8)
@@ -247,7 +255,9 @@ def run_generator_comparison():
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(train_df)
-
+    meta_path = Path("config/metadata.json")
+    meta_path.unlink(missing_ok=True)
+    metadata.save_to_json(str(meta_path))
     generators  = get_generators(metadata, epochs)
     all_results = {}
 
@@ -267,7 +277,7 @@ def run_generator_comparison():
             })
 
             # Train and generate
-            synth_df = train_and_sample(model, train_df, n_synth, model_name)
+
 
             # Save synthetic data per generator
             safe_name = model_name.lower().replace(" ", "_")

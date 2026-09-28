@@ -1,4 +1,7 @@
 import pandas as pd
+import random
+import numpy as np
+import torch
 import mlflow
 import pickle
 import yaml
@@ -24,7 +27,10 @@ def load_train_data(processed_path: str) -> pd.DataFrame:
 def build_metadata(df: pd.DataFrame) -> SingleTableMetadata:
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(df)
-    logger.info("Metadata schema detected from dataframe")
+    meta_path = Path("config/metadata.json")
+    meta_path.unlink(missing_ok=True)
+    metadata.save_to_json(str(meta_path))
+    logger.info("Metadata schema detected and saved to config/metadata.json")
     return metadata
 
 
@@ -85,6 +91,9 @@ def run_generation(n_synth: int = 1000):
 
         df_train     = load_train_data(processed_path)
         metadata     = build_metadata(df_train)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
         model        = train_ctgan(df_train, metadata, epochs)
         model_path   = save_model(model, "models/")
         synthetic_df = generate_and_save(model, n_synth, synthetic_path)
