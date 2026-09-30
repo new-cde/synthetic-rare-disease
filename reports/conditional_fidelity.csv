@@ -1,0 +1,6 @@
+Disease,Real records,Synth records,JS_inheritance,JS_category,JS_affected_systems,JS_prevalence,Avg JS,Max JS,Quality
+fukuyama_muscular_dystrophy,280,218,0.0565,0.0,0.0565,0.0,0.0282,0.0565,Good
+hallervorden_spatz_disease,280,171,0.1284,0.12,0.0,0.1284,0.0942,0.1284,Good
+moyamoya_disease,280,190,0.1052,0.1052,0.0,0.1138,0.081,0.1138,Good
+pachygyria_cerebellar_hypoplasia,280,203,0.0928,0.0718,0.0,0.0585,0.0558,0.0928,Good
+walker_warburg_syndrome,280,218,0.0,0.0692,0.1061,0.0982,0.0684,0.1061,Good
