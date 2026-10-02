@@ -1,0 +1,6 @@
+Disease,Real count,Synthetic count,Synth/Real ratio,Count diff,Avg JS (within)
+fukuyama_muscular_dystrophy,280,218,0.7786,-62,0.0282
+hallervorden_spatz_disease,280,171,0.6107,-109,0.0942
+moyamoya_disease,280,190,0.6786,-90,0.081
+pachygyria_cerebellar_hypoplasia,280,203,0.725,-77,0.0558
+walker_warburg_syndrome,280,218,0.7786,-62,0.0684

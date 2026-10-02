@@ -1,0 +1,6 @@
+Disease,Test records,TRTR accuracy,TSTR accuracy,Accuracy drop,Risk
+fukuyama_muscular_dystrophy,60,0.6167,0.8,-0.1833,Low
+hallervorden_spatz_disease,60,0.95,0.9667,-0.0167,Low
+moyamoya_disease,60,0.8833,0.7333,0.15,Medium
+pachygyria_cerebellar_hypoplasia,60,0.9167,0.85,0.0667,Low
+walker_warburg_syndrome,60,0.8333,0.7,0.1333,Medium
