@@ -1,0 +1,10 @@
+Feature,Type,In real (cleaned),In synthetic,Unique values (real),Missing values,Description
+disease,Categorical,Yes,Yes,5,0,Target disease label (5 classes)
+split,Categorical,Yes,No (split col removed),3,0,Dataset partition — train/val/test (removed before generation)
+full_name,Categorical,Yes,Yes,5,0,Full clinical name of disease
+orphacode,Categorical,Yes,Yes,5,0,Orphanet rare disease registry code
+alternative_names,Categorical,Yes,Yes,5,0,Other known names for the disease
+prevalence,Categorical,Yes,Yes,5,0,Global prevalence estimate from Orphanet
+inheritance,Categorical,Yes,Yes,3,0,Inheritance pattern (autosomal recessive etc)
+category,Categorical,Yes,Yes,4,0,Disease category (muscular dystrophy etc)
+affected_systems,Categorical,Yes,Yes,3,0,Body systems affected
