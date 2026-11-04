@@ -38,16 +38,33 @@ def encode_for_analysis(df: pd.DataFrame) -> pd.DataFrame:
 # ── Basic distribution plots ──────────────────────────────────────────────────
 
 def plot_class_distribution(df: pd.DataFrame, out_dir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(11, 5))
+    fig, ax = plt.subplots(figsize=(12, 6))
     counts  = df.groupby(["disease", "split"]).size().unstack()
-    counts.plot(kind="bar", ax=ax, colormap="Set2")
-    ax.set_title("Record count per disease and split")
-    ax.set_xlabel("Disease")
-    ax.set_ylabel("Count")
-    ax.tick_params(axis="x", rotation=30)
+    counts.plot(kind="bar", ax=ax, colormap="Set2", edgecolor="white",
+                linewidth=0.8, width=0.7)
+    ax.set_title("Distribution of disease classes in the curated dataset",
+                 fontsize=16, fontweight="bold", pad=15)
+    ax.set_xlabel("Disease", fontsize=14, fontweight="bold", labelpad=12)
+    ax.set_ylabel("Record count", fontsize=14, fontweight="bold", labelpad=12)
+    ax.tick_params(axis="x", rotation=20, labelsize=12)
+    ax.tick_params(axis="y", labelsize=12)
+    for label in ax.get_xticklabels():
+        label.set_fontweight("bold")
+    for label in ax.get_yticklabels():
+        label.set_fontweight("bold")
+    # Value annotations on each bar
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%d", fontsize=10,
+                     fontweight="bold", padding=3)
+    ax.legend(title="Split", title_fontsize=12,
+              fontsize=11, frameon=True)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     plt.tight_layout()
-    _save(fig, out_dir / "class_distribution.png")
-
+    out = out_dir / "class_distribution.png"
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved: {out}")
 
 def plot_inheritance_distribution(df: pd.DataFrame, out_dir: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 4))

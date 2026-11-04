@@ -1,4 +1,5 @@
 {
+    "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1",
     "columns": {
         "disease": {
             "sdtype": "categorical"
@@ -24,6 +25,5 @@
         "affected_systems": {
             "sdtype": "categorical"
         }
-    },
-    "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"
+    }
 }

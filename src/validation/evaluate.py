@@ -63,28 +63,87 @@ def compute_divergences(real_df: pd.DataFrame,
     print("\nDistribution Similarity Report:")
     print(df_div.to_string(index=False))
 
-    # Bar chart
-    fig, ax = plt.subplots(figsize=(10, 5))
-    x      = range(len(df_div))
-    width  = 0.35
-    ax.bar([i - width/2 for i in x], df_div["KL Divergence"],
-           width, label="KL Divergence", color="steelblue")
-    ax.bar([i + width/2 for i in x], df_div["JS Divergence"],
-           width, label="JS Divergence", color="coral")
-    ax.axhline(0.1, color="green", linestyle="--",
-               linewidth=1, label="JS=0.1 (good threshold)")
-    ax.axhline(0.2, color="red", linestyle="--",
-               linewidth=1, label="JS=0.2 (acceptable threshold)")
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(df_div["Column"], rotation=15)
-    ax.set_ylabel("Divergence score")
-    ax.set_title("KL and JS divergence — real vs synthetic")
-    ax.legend()
+        # ── Chart 1: KL Divergence ────────────────────────────────────────────────
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
+    bars1 = ax1.bar(
+        df_div["Column"], df_div["KL Divergence"],
+        color="#2196F3", width=0.5,
+        edgecolor="white", linewidth=0.8
+    )
+    for bar in bars1:
+        ax1.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.0003,
+            f"{bar.get_height():.4f}",
+            ha="center", va="bottom",
+            fontsize=11, fontweight="bold", color="#1a1a1a"
+        )
+    ax1.set_xlabel("Feature column", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax1.set_ylabel("KL Divergence score", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax1.set_title(
+        "KL Divergence — real vs synthetic feature distributions",
+        fontsize=15, fontweight="bold", pad=15
+    )
+    ax1.tick_params(axis="x", labelsize=12, labelrotation=15)
+    ax1.tick_params(axis="y", labelsize=12)
+    for label in ax1.get_xticklabels() + ax1.get_yticklabels():
+        label.set_fontweight("bold")
+    ax1.set_ylim(0, max(df_div["KL Divergence"]) * 1.5)
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
     plt.tight_layout()
-    path = out_dir / "divergence_scores.png"
-    fig.savefig(path, dpi=150)
-    plt.close(fig)
-    logger.info(f"Saved: {path}")
+    path1 = out_dir / "kl_divergence_scores.png"
+    fig1.savefig(path1, dpi=150, bbox_inches="tight")
+    plt.close(fig1)
+    logger.info(f"Saved: {path1}")
+
+    # ── Chart 2: JS Divergence ────────────────────────────────────────────────
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    bar_colors = [
+        "#2196F3" if v < 0.1 else "#FF9800"
+        for v in df_div["JS Divergence"]
+    ]
+    bars2 = ax2.bar(
+        df_div["Column"], df_div["JS Divergence"],
+        color=bar_colors, width=0.5,
+        edgecolor="white", linewidth=0.8
+    )
+    for bar in bars2:
+        ax2.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.002,
+            f"{bar.get_height():.4f}",
+            ha="center", va="bottom",
+            fontsize=11, fontweight="bold", color="#1a1a1a"
+        )
+    ax2.axhline(
+        0.1, color="#4CAF50", linestyle="--",
+        linewidth=2.2, zorder=3,
+        label="Good threshold  (JS = 0.10)"
+    )
+    ax2.set_xlabel("Feature column", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax2.set_ylabel("JS Divergence score", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax2.set_title(
+        "JS Divergence — real vs synthetic feature distributions",
+        fontsize=15, fontweight="bold", pad=15
+    )
+    ax2.tick_params(axis="x", labelsize=12, labelrotation=15)
+    ax2.tick_params(axis="y", labelsize=12)
+    for label in ax2.get_xticklabels() + ax2.get_yticklabels():
+        label.set_fontweight("bold")
+    ax2.set_ylim(0, 0.15)
+    ax2.legend(fontsize=12, frameon=True, loc="upper right")
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    plt.tight_layout()
+    path2 = out_dir / "js_divergence_scores.png"
+    fig2.savefig(path2, dpi=150, bbox_inches="tight")
+    plt.close(fig2)
+    logger.info(f"Saved: {path2}")
 
     return df_div
 
@@ -93,34 +152,64 @@ def plot_distribution_comparison(real_df: pd.DataFrame,
                                  synth_df: pd.DataFrame,
                                  out_dir: Path) -> None:
     cat_cols = ["disease", "inheritance", "category"]
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
-    for ax, col in zip(axes, cat_cols):
+    for col in cat_cols:
         real_pct  = real_df[col].value_counts(normalize=True).sort_index()
         synth_pct = synth_df[col].value_counts(normalize=True).sort_index()
         all_cats  = sorted(set(real_pct.index) | set(synth_pct.index))
         x         = range(len(all_cats))
         width     = 0.35
 
-        ax.bar([i - width/2 for i in x],
-               [real_pct.get(c, 0) for c in all_cats],
-               width, label="Real", color="steelblue", alpha=0.8)
-        ax.bar([i + width/2 for i in x],
-               [synth_pct.get(c, 0) for c in all_cats],
-               width, label="Synthetic", color="coral", alpha=0.8)
+        fig, ax = plt.subplots(figsize=(12, 6))
+        bars_r = ax.bar(
+            [i - width/2 for i in x],
+            [real_pct.get(c, 0) for c in all_cats],
+            width, label="Real", color="#2196F3",
+            alpha=0.9, edgecolor="white", linewidth=0.8
+        )
+        bars_s = ax.bar(
+            [i + width/2 for i in x],
+            [synth_pct.get(c, 0) for c in all_cats],
+            width, label="Synthetic", color="#FF5722",
+            alpha=0.9, edgecolor="white", linewidth=0.8
+        )
+        for bar in list(bars_r) + list(bars_s):
+            if bar.get_height() > 0:
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + 0.005,
+                    f"{bar.get_height():.3f}",
+                    ha="center", va="bottom",
+                    fontsize=10, fontweight="bold", color="#1a1a1a"
+                )
         ax.set_xticks(list(x))
-        ax.set_xticklabels(all_cats, rotation=30, ha="right", fontsize=8)
-        ax.set_title(f"{col} distribution")
-        ax.set_ylabel("Proportion")
-        ax.legend()
-
-    plt.suptitle("Real vs synthetic distribution comparison")
-    plt.tight_layout()
-    path = out_dir / "distribution_comparison.png"
-    fig.savefig(path, dpi=150)
-    plt.close(fig)
-    logger.info(f"Saved: {path}")
-
+        ax.set_xticklabels(
+            all_cats, rotation=25, ha="right",
+            fontsize=12, fontweight="bold"
+        )
+        ax.set_xlabel(
+            col.replace("_", " ").title(),
+            fontsize=14, fontweight="bold", labelpad=12
+        )
+        ax.set_ylabel(
+            "Proportion", fontsize=14,
+            fontweight="bold", labelpad=12
+        )
+        ax.set_title(
+            f"{col.replace('_',' ').title()} — real vs synthetic distribution",
+            fontsize=15, fontweight="bold", pad=15
+        )
+        ax.tick_params(axis="y", labelsize=12)
+        for label in ax.get_yticklabels():
+            label.set_fontweight("bold")
+        ax.legend(fontsize=13, frameon=True)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        plt.tight_layout()
+        path = out_dir / f"distribution_{col}.png"
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        logger.info(f"Saved: {path}")
 
 # ── TSTR evaluation ───────────────────────────────────────────────────────────
 
@@ -213,24 +302,36 @@ def run_tstr(real_df: pd.DataFrame,
         target_names=le_target.classes_
     ))
 
-    # Comparison bar chart
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(9, 6))
     labels  = ["Train on Real\n(Baseline)", "Train on Synthetic\n(TSTR)"]
     accs    = [acc_real, acc_synth]
-    colors  = ["steelblue", "coral"]
-    bars    = ax.bar(labels, accs, color=colors, width=0.4)
+    colors  = ["#2196F3", "#FF5722"]
+    bars    = ax.bar(labels, accs, color=colors, width=0.45,
+                     edgecolor="white", linewidth=0.8)
     for bar, val in zip(bars, accs):
-        ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + 0.005,
-                f"{val:.4f}", ha="center", va="bottom", fontsize=11)
-    ax.set_ylim(0, 1.1)
-    ax.set_ylabel("Accuracy")
-    ax.set_title("TSTR Evaluation — Real vs Synthetic Training")
-    ax.axhline(acc_real, color="steelblue",
-               linestyle="--", linewidth=1, alpha=0.5)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.008,
+            f"{val:.4f}",
+            ha="center", va="bottom",
+            fontsize=14, fontweight="bold", color="#1a1a1a"
+        )
+    ax.set_ylim(0, 1.15)
+    ax.set_ylabel("Accuracy", fontsize=14,
+                  fontweight="bold", labelpad=12)
+    ax.set_title(
+        "TSTR evaluation — real vs synthetic training accuracy",
+        fontsize=15, fontweight="bold", pad=15
+    )
+    ax.tick_params(axis="x", labelsize=13)
+    ax.tick_params(axis="y", labelsize=12)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight("bold")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     plt.tight_layout()
     path = out_dir / "tstr_comparison.png"
-    fig.savefig(path, dpi=150)
+    fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     logger.info(f"Saved: {path}")
 

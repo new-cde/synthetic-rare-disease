@@ -53,30 +53,50 @@ def run():
     df.to_csv(csv_path, index=False)
     logger.success(f"Comparison table saved to {csv_path}")
 
-    # Save chart
-    fig, ax = plt.subplots(figsize=(10, 5))
-    x     = range(len(df))
-    width = 0.35
-    bars1 = ax.bar([i - width/2 for i in x], df["Val Accuracy"],
-                   width, label="Val Accuracy",  color="steelblue")
-    bars2 = ax.bar([i + width/2 for i in x], df["Test Accuracy"],
-                   width, label="Test Accuracy", color="coral")
-    for bar in bars1 + bars2:
+    fig, ax = plt.subplots(figsize=(12, 6))
+    x      = range(len(df))
+    width  = 0.35
+    bars1  = ax.bar(
+        [i - width/2 for i in x], df["Val Accuracy"],
+        width, label="Val Accuracy",
+        color="#2196F3", edgecolor="white", linewidth=0.8
+    )
+    bars2  = ax.bar(
+        [i + width/2 for i in x], df["Test Accuracy"],
+        width, label="Test Accuracy",
+        color="#FF5722", edgecolor="white", linewidth=0.8
+    )
+    for bar in list(bars1) + list(bars2):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 0.005,
+            bar.get_height() + 0.003,
             f"{bar.get_height():.3f}",
-            ha="center", va="bottom", fontsize=9
+            ha="center", va="bottom",
+            fontsize=11, fontweight="bold", color="#1a1a1a"
         )
     ax.set_xticks(list(x))
-    ax.set_xticklabels(df["Model"], rotation=15)
-    ax.set_ylim(0, 1.1)
-    ax.set_ylabel("Accuracy")
-    ax.set_title("Model comparison — Val vs Test accuracy")
-    ax.legend()
+    ax.set_xticklabels(
+        df["Model"], rotation=15, ha="right",
+        fontsize=13, fontweight="bold"
+    )
+    ax.set_ylim(0, 1.08)
+    ax.set_xlabel("Model", fontsize=14,
+                  fontweight="bold", labelpad=12)
+    ax.set_ylabel("Accuracy", fontsize=14,
+                  fontweight="bold", labelpad=12)
+    ax.set_title(
+        "Baseline model comparison — validation vs test accuracy",
+        fontsize=15, fontweight="bold", pad=15
+    )
+    ax.legend(fontsize=13, frameon=True)
+    ax.tick_params(axis="y", labelsize=12)
+    for label in ax.get_yticklabels():
+        label.set_fontweight("bold")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     plt.tight_layout()
     chart_path = out_dir / "model_comparison.png"
-    fig.savefig(chart_path, dpi=150)
+    fig.savefig(chart_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     logger.success(f"Chart saved to {chart_path}")
 

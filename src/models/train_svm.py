@@ -83,19 +83,48 @@ def run():
         results = {}
         for split_name, X, y in [("val", X_val, y_val), ("test", X_test, y_test)]:
             y_pred = model.predict(X)
-            acc = accuracy_score(y, y_pred)
-            f1  = f1_score(y, y_pred, average="weighted")
+            acc    = accuracy_score(y, y_pred)
+            f1     = f1_score(y, y_pred, average="weighted")
             logger.info(f"SVM | {split_name} | Acc: {acc:.4f} | F1: {f1:.4f}")
             print(classification_report(y, y_pred, target_names=le.classes_))
 
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ConfusionMatrixDisplay(confusion_matrix(y, y_pred),
-                                   display_labels=le.classes_).plot(ax=ax, xticks_rotation=30, colorbar=False)
-            ax.set_title(f"SVM — {split_name}")
+            # Confusion matrix — inside the loop so val and test both saved
+            fig, ax = plt.subplots(figsize=(11, 9))
+            cm      = confusion_matrix(y, y_pred)
+            disp    = ConfusionMatrixDisplay(
+                cm, display_labels=le.classes_
+            )
+            disp.plot(ax=ax, colorbar=True,
+                      cmap="Blues", xticks_rotation=30)
+            ax.set_title(
+                f"SVM — {split_name} set confusion matrix",
+                fontsize=15, fontweight="bold", pad=15
+            )
+            ax.set_xlabel(
+                "Predicted label",
+                fontsize=13, fontweight="bold", labelpad=14
+            )
+            ax.set_ylabel(
+                "True label",
+                fontsize=13, fontweight="bold", labelpad=14
+            )
+            for label in ax.get_xticklabels():
+                label.set_fontweight("bold")
+                label.set_fontsize(10)
+                label.set_rotation(30)
+                label.set_ha("right")
+            for label in ax.get_yticklabels():
+                label.set_fontweight("bold")
+                label.set_fontsize(10)
+            for text in ax.texts:
+                text.set_fontsize(13)
+                text.set_fontweight("bold")
             plt.tight_layout()
-            fig.savefig(out_dir / f"cm_svm_{split_name}.png", dpi=150)
+            fig_path = out_dir / f"cm_svm_{split_name}.png"
+            fig.savefig(fig_path, dpi=150, bbox_inches="tight")
             plt.close(fig)
 
+            # Store results for CSV and MLflow
             results[f"{split_name}_accuracy"] = round(acc, 4)
             results[f"{split_name}_f1"]       = round(f1, 4)
 
@@ -110,8 +139,10 @@ def run():
         pd.DataFrame([{"model": "SVM", **results}]).to_csv(
             "reports/metrics_svm.csv", index=False
         )
-        logger.success(f"SVM — Val Acc: {results['val_accuracy']} | Test Acc: {results['test_accuracy']}")
-
+        logger.success(
+            f"SVM — Val Acc: {results['val_accuracy']} | "
+            f"Test Acc: {results['test_accuracy']}"
+        )
 
 if __name__ == "__main__":
     run()

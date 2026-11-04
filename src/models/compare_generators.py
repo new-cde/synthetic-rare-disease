@@ -201,38 +201,109 @@ def save_comparison_table(results: dict, out_dir: Path) -> pd.DataFrame:
     df.to_csv(csv_path, index=False)
     logger.info(f"Comparison table saved to {csv_path}")
 
-    # Bar chart — JS divergence + TSTR accuracy
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     generators = df["Generator"].tolist()
-    x = range(len(generators))
-    width = 0.35
+    x          = range(len(generators))
+    width      = 0.35
 
-    # Left: fidelity
-    axes[0].bar([i - width/2 for i in x], df["Avg JS Divergence"],
-                width, label="Avg JS Divergence", color="steelblue")
-    axes[0].bar([i + width/2 for i in x], df["Avg KL Divergence"],
-                width, label="Avg KL Divergence", color="teal")
-
-    axes[0].set_xticks(list(x)); axes[0].set_xticklabels(generators, rotation=15)
-    axes[0].set_ylabel("Divergence"); axes[0].set_title("Marginal fidelity")
-    axes[0].legend(fontsize=8)
-
-    # Right: utility
-    axes[1].bar([i - width/2 for i in x], df["TSTR Accuracy"],
-                width, label="TSTR Accuracy", color="coral")
-    axes[1].bar([i + width/2 for i in x], df["TSTR Macro F1"],
-                width, label="TSTR Macro F1", color="salmon")
-    axes[1].set_xticks(list(x)); axes[1].set_xticklabels(generators, rotation=15)
-    axes[1].set_ylabel("Score"); axes[1].set_title("Downstream utility (TSTR)")
-    axes[1].legend(fontsize=8)
-    axes[1].set_ylim(0, 1)
-
-    plt.suptitle("Generative model comparison — fidelity vs utility")
+    # ── Chart 1: Marginal fidelity ────────────────────────────────────────────
+    fig1, ax1 = plt.subplots(figsize=(9, 6))
+    bars_js = ax1.bar(
+        [i - width/2 for i in x], df["Avg JS Divergence"],
+        width, label="Avg JS Divergence",
+        color="#2196F3", edgecolor="white", linewidth=0.8
+    )
+    bars_kl = ax1.bar(
+        [i + width/2 for i in x], df["Avg KL Divergence"],
+        width, label="Avg KL Divergence",
+        color="#00BCD4", edgecolor="white", linewidth=0.8
+    )
+    for bar in list(bars_js) + list(bars_kl):
+        ax1.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.001,
+            f"{bar.get_height():.4f}",
+            ha="center", va="bottom",
+            fontsize=11, fontweight="bold", color="#1a1a1a"
+        )
+    ax1.axhline(
+        0.1, color="#4CAF50", linestyle="--",
+        linewidth=2.0, label="Good threshold (JS = 0.10)"
+    )
+    ax1.set_xticks(list(x))
+    ax1.set_xticklabels(
+        generators, rotation=15, ha="right",
+        fontsize=12, fontweight="bold"
+    )
+    ax1.set_ylim(
+        0,
+        max(df["Avg JS Divergence"].max(),
+            df["Avg KL Divergence"].max()) * 1.5
+    )
+    ax1.set_xlabel("Generative model", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax1.set_ylabel("Divergence score", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax1.set_title(
+        "Generator comparison — marginal fidelity (JS and KL divergence)",
+        fontsize=14, fontweight="bold", pad=15
+    )
+    ax1.legend(fontsize=12, frameon=True)
+    ax1.tick_params(axis="y", labelsize=12)
+    for label in ax1.get_xticklabels() + ax1.get_yticklabels():
+        label.set_fontweight("bold")
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
     plt.tight_layout()
-    chart_path = out_dir / "generator_comparison.png"
-    fig.savefig(chart_path, dpi=150)
-    plt.close(fig)
-    logger.info(f"Chart saved to {chart_path}")
+    fig1.savefig(out_dir / "generator_comparison_fidelity.png",
+                 dpi=150, bbox_inches="tight")
+    plt.close(fig1)
+    logger.info(f"Saved: {out_dir / 'generator_comparison_fidelity.png'}")
+
+    # ── Chart 2: Downstream utility ───────────────────────────────────────────
+    fig2, ax2 = plt.subplots(figsize=(9, 6))
+    bars_acc = ax2.bar(
+        [i - width/2 for i in x], df["TSTR Accuracy"],
+        width, label="TSTR Accuracy",
+        color="#FF5722", edgecolor="white", linewidth=0.8
+    )
+    bars_f1 = ax2.bar(
+        [i + width/2 for i in x], df["TSTR Macro F1"],
+        width, label="TSTR Macro F1",
+        color="#FF9800", edgecolor="white", linewidth=0.8
+    )
+    for bar in list(bars_acc) + list(bars_f1):
+        ax2.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.005,
+            f"{bar.get_height():.4f}",
+            ha="center", va="bottom",
+            fontsize=11, fontweight="bold", color="#1a1a1a"
+        )
+    ax2.set_xticks(list(x))
+    ax2.set_xticklabels(
+        generators, rotation=15, ha="right",
+        fontsize=12, fontweight="bold"
+    )
+    ax2.set_ylim(0, 1.10)
+    ax2.set_xlabel("Generative model", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax2.set_ylabel("Score", fontsize=14,
+                   fontweight="bold", labelpad=12)
+    ax2.set_title(
+        "Generator comparison — downstream utility (TSTR accuracy and Macro F1)",
+        fontsize=14, fontweight="bold", pad=15
+    )
+    ax2.legend(fontsize=12, frameon=True)
+    ax2.tick_params(axis="y", labelsize=12)
+    for label in ax2.get_xticklabels() + ax2.get_yticklabels():
+        label.set_fontweight("bold")
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    plt.tight_layout()
+    fig2.savefig(out_dir / "generator_comparison_utility.png",
+                 dpi=150, bbox_inches="tight")
+    plt.close(fig2)
+    logger.info(f"Saved: {out_dir / 'generator_comparison_utility.png'}")
 
     return df
 
@@ -276,7 +347,7 @@ def run_generator_comparison():
                 "n_synth":   n_synth,
             })
 
-            # Train and generate
+            synth_df = train_and_sample(model, train_df, n_synth, model_name)
 
 
             # Save synthetic data per generator
