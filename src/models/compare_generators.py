@@ -68,11 +68,13 @@ def get_generators(metadata: SingleTableMetadata, epochs: int) -> dict:
 
 
 def train_and_sample(model, train_df: pd.DataFrame,
-                     n: int, model_name: str) -> pd.DataFrame:
+                     n: int, model_name: str, seed: int) -> pd.DataFrame:
     logger.info(f"Training {model_name}...")
+    random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
     model.fit(train_df)
+    random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
     synthetic_df = model.sample(num_rows=n)
-    logger.success(f"{model_name} — generated {len(synthetic_df)} records")
+    logger.success(f"{model_name} - generated {len(synthetic_df)} records")
     return synthetic_df
 
 
@@ -347,8 +349,7 @@ def run_generator_comparison():
                 "n_synth":   n_synth,
             })
 
-            synth_df = train_and_sample(model, train_df, n_synth, model_name)
-
+            synth_df = train_and_sample(model, train_df, n_synth, model_name, seed)
 
             # Save synthetic data per generator
             safe_name = model_name.lower().replace(" ", "_")
