@@ -1,0 +1,49 @@
+Feature Noise,Model,Label Noise,Acc_mean,Acc_sd,F1_mean,F1_sd
+False,Gradient Boosting,0.0,1.0,0.0,1.0,0.0
+False,Gradient Boosting,0.02,1.0,0.0,1.0,0.0
+False,Gradient Boosting,0.05,1.0,0.0,1.0,0.0
+False,Gradient Boosting,0.08,1.0,0.0,1.0,0.0
+False,Gradient Boosting,0.1,1.0,0.0,1.0,0.0
+False,Gradient Boosting,0.15,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.0,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.02,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.05,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.08,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.1,1.0,0.0,1.0,0.0
+False,Logistic Regression,0.15,1.0,0.0,1.0,0.0
+False,Random Forest,0.0,1.0,0.0,1.0,0.0
+False,Random Forest,0.02,1.0,0.0,1.0,0.0
+False,Random Forest,0.05,1.0,0.0,1.0,0.0
+False,Random Forest,0.08,1.0,0.0,1.0,0.0
+False,Random Forest,0.1,1.0,0.0,1.0,0.0
+False,Random Forest,0.15,1.0,0.0,1.0,0.0
+False,SVM,0.0,1.0,0.0,1.0,0.0
+False,SVM,0.02,1.0,0.0,1.0,0.0
+False,SVM,0.05,1.0,0.0,1.0,0.0
+False,SVM,0.08,1.0,0.0,1.0,0.0
+False,SVM,0.1,1.0,0.0,1.0,0.0
+False,SVM,0.15,1.0,0.0,1.0,0.0
+True,Gradient Boosting,0.0,0.8387,0.0174,0.8374,0.0182
+True,Gradient Boosting,0.02,0.8427,0.0202,0.8411,0.0206
+True,Gradient Boosting,0.05,0.8367,0.0211,0.8352,0.0222
+True,Gradient Boosting,0.08,0.836,0.0233,0.8345,0.0234
+True,Gradient Boosting,0.1,0.838,0.0145,0.8369,0.0151
+True,Gradient Boosting,0.15,0.83,0.0091,0.8289,0.0097
+True,Logistic Regression,0.0,0.86,0.0275,0.8579,0.0298
+True,Logistic Regression,0.02,0.8573,0.0278,0.8551,0.0302
+True,Logistic Regression,0.05,0.8593,0.0298,0.8564,0.032
+True,Logistic Regression,0.08,0.8593,0.0251,0.8563,0.0274
+True,Logistic Regression,0.1,0.8547,0.0233,0.852,0.0254
+True,Logistic Regression,0.15,0.858,0.0234,0.8548,0.0261
+True,Random Forest,0.0,0.8313,0.0145,0.8278,0.0138
+True,Random Forest,0.02,0.8347,0.0163,0.831,0.0159
+True,Random Forest,0.05,0.832,0.0122,0.8291,0.0128
+True,Random Forest,0.08,0.8293,0.014,0.8259,0.0145
+True,Random Forest,0.1,0.832,0.009,0.8281,0.0085
+True,Random Forest,0.15,0.8353,0.0176,0.8325,0.0174
+True,SVM,0.0,0.858,0.0275,0.8559,0.0299
+True,SVM,0.02,0.8607,0.0255,0.8591,0.0277
+True,SVM,0.05,0.86,0.0248,0.8581,0.0269
+True,SVM,0.08,0.8593,0.0233,0.8575,0.0256
+True,SVM,0.1,0.85,0.0272,0.8484,0.0294
+True,SVM,0.15,0.858,0.0226,0.8561,0.0248
